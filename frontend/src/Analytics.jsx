@@ -3,8 +3,8 @@ import "./Analytics.css";
 
 const PAGES = ["P1", "P2"];
 const COLORS = {
-  P1: { stroke: "rgba(0, 255, 170, 1)", fill: "rgba(0, 255, 170, 0.15)" },
-  P2: { stroke: "rgba(255, 80, 120, 1)", fill: "rgba(255, 80, 120, 0.15)" },
+  P1: { stroke: "#2563eb", fill: "rgba(37, 99, 235, 0.05)" }, // Indigo
+  P2: { stroke: "#64748b", fill: "rgba(100, 116, 139, 0.05)" }, // Slate
 };
 
 export default function Analytics() {
@@ -33,21 +33,22 @@ export default function Analytics() {
   const initChart = () => {
     const chart = new window.SmoothieChart({
       responsive: true,
-      millisPerPixel: 60,
+      millisPerPixel: 50,
       grid: {
-        fillStyle: "transparent",
-        strokeStyle: "rgba(255,255,255,0.05)",
-        verticalSections: 5,
+        fillStyle: "#ffffff",
+        strokeStyle: "#f1f5f9", // Light gray grid
+        verticalSections: 6,
         borderVisible: false,
       },
       labels: {
-        fillStyle: "rgba(255,255,255,0.35)",
-        fontSize: 11,
-        fontFamily: "'Courier New', monospace",
+        fillStyle: "#64748b",
+        fontSize: 12,
+        fontFamily: "Inter, system-ui, sans-serif",
       },
       tooltip: true,
-      maxValueScale: 1.2,
+      maxValueScale: 1.1,
       minValue: 0,
+      interpolation: 'bezier' // Smoother lines for professional look
     });
 
     PAGES.forEach((page) => {
@@ -56,7 +57,7 @@ export default function Analytics() {
       chart.addTimeSeries(series, {
         strokeStyle: COLORS[page].stroke,
         fillStyle: COLORS[page].fill,
-        lineWidth: 2.5,
+        lineWidth: 2,
       });
     });
 
@@ -86,55 +87,54 @@ export default function Analytics() {
 
     evtSource.onerror = () => {
       setConnected(false);
-      setError("Connexion perdue. Vérifiez que le backend tourne sur :8081");
+      setError("Connection lost. Verify backend status on :8081");
     };
 
     return () => evtSource.close();
   }, []);
 
   return (
-    <div className="analytics-container">
-      <div className="analytics-header">
-        <p className="analytics-subtitle">Kafka Streams</p>
-        <h1 className="analytics-title">Page Analytics</h1>
-        <div className="analytics-status">
-          <span className={`status-dot ${connected ? "status-live" : "status-off"}`} />
-          <span className={`status-label ${connected ? "status-live" : "status-off"}`}>
-            {connected ? "LIVE" : "DISCONNECTED"}
-          </span>
+    <div className="dashboard-wrapper">
+      <header className="dashboard-header">
+        <div className="header-left">
+          <span className="badge">System Monitor</span>
+          <h1>Real-time Page Traffic</h1>
         </div>
-      </div>
-
-      <div className="analytics-cards">
-        {PAGES.map((page) => (
-          <div
-            key={page}
-            className="analytics-card"
-            style={{ borderColor: COLORS[page].stroke, background: COLORS[page].fill }}
-          >
-            <p className="card-label" style={{ color: COLORS[page].stroke }}>{page}</p>
-            <p className="card-value" style={{ color: COLORS[page].stroke }}>{lastValues[page]}</p>
-            <p className="card-unit">events / window</p>
+        <div className="header-right">
+          <div className={`status-pill ${connected ? "is-online" : "is-offline"}`}>
+            <span className="dot" />
+            {connected ? "Live System" : "Offline"}
           </div>
-        ))}
-      </div>
+        </div>
+      </header>
 
-      <div className="analytics-chart-wrapper">
-        <div className="chart-legend">
+      <main className="dashboard-content">
+        <section className="stats-grid">
           {PAGES.map((page) => (
-            <div key={page} className="legend-item">
-              <div
-                className="legend-line"
-                style={{ background: COLORS[page].stroke, boxShadow: `0 0 6px ${COLORS[page].stroke}` }}
-              />
-              <span className="legend-label">{page}</span>
+            <div key={page} className="stats-card">
+              <div className="card-header">
+                <span className="card-indicator" style={{ backgroundColor: COLORS[page].stroke }} />
+                <h3>{page} Traffic</h3>
+              </div>
+              <div className="card-body">
+                <span className="value">{lastValues[page]}</span>
+                <span className="unit">req/sec</span>
+              </div>
             </div>
           ))}
-        </div>
-        <canvas ref={canvasRef} width={750} height={300} className="analytics-canvas" />
-      </div>
+        </section>
 
-      {error && <div className="analytics-error">⚠ {error}</div>}
+        <section className="chart-container">
+          <div className="chart-header">
+            <h4>Traffic Velocity (Last 60s)</h4>
+          </div>
+          <div className="canvas-wrapper">
+            <canvas ref={canvasRef} height={350} />
+          </div>
+        </section>
+
+        {error && <div className="error-banner">{error}</div>}
+      </main>
     </div>
   );
 }
