@@ -1,4 +1,7 @@
 spring:
+  application:
+    name: real-time-analytics
+
   cloud:
     stream:
       function:
@@ -7,6 +10,9 @@ spring:
         pageEventConsumer-in-0:
           destination: page-events
           group: page-group
+          consumer:
+            #  Dead Letter Topic : les messages en erreur vont dans page-events.DLT
+            max-attempts: 3
         pageEventSupplier-out-0:
           destination: page-events
         kStreamKStreamFunction-in-0:
@@ -16,19 +22,83 @@ spring:
       kafka:
         streams:
           binder:
-            brokers: broker:29092
+            # Sera surchargé par la variable d'env DOCKER en prod
+            brokers: localhost:9092
             configuration:
               commit.interval.ms: 1000
               default.key.serde: org.apache.kafka.common.serialization.Serdes$StringSerde
               default.value.serde: org.springframework.kafka.support.serializer.JsonSerde
+        #  Dead Letter Topic activé
+        bindings:
+          pageEventConsumer-in-0:
+            consumer:
+              enable-dlq: true
+              dlq-name: page-events.DLT
+
   kafka:
+    bootstrap-servers: localhost:9092
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      #  Idempotence : garantit exactly-once delivery côté producteur
+      properties:
+        enable.idempotence: true
+        acks: all
+        retries: 3
     consumer:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+      auto-offset-reset: latest
+
 server:
   port: 8081
+
+# pring Actuator : expose health, info, metrics, prometheus
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, prometheus, env
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# Infos affichées sur /actuator/info
+info:
+  app:
+    name: ${spring.application.name}
+    description: Real-Time Analytics Dashboard with Kafka Streams
+    version: 1.0.0
+
+# Logging structuré (JSON-ready pour ELK/Grafana Loki)
+logging:
+  level:
+    root: INFO
+    com.example.auth: DEBUG
+    org.apache.kafka: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+
+---
+#  Profil Docker : surcharge les brokers pour le réseau interne Docker
+spring:
+  config:
+    activate:
+      on-profile: docker
+  cloud:
+    stream:
+      kafka:
+        streams:
+          binder:
+            brokers: broker:29092
+  kafka:
+    bootstrap-servers: broker:29092

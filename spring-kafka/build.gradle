@@ -29,14 +29,30 @@ ext {
 }
 
 dependencies {
+     // === Core ===
     implementation 'org.springframework.boot:spring-boot-starter-kafka'
     implementation 'org.springframework.boot:spring-boot-starter-webflux'
     implementation 'org.apache.kafka:kafka-streams'
     implementation 'org.springframework.cloud:spring-cloud-stream'
     implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka'
     implementation 'org.springframework.cloud:spring-cloud-stream-binder-kafka-streams'
+
+    //  Actuator : health, metrics, info (indispensable en prod & entretien)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    //  Micrometer Prometheus : exposition de métriques pour Grafana/Prometheus
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    //  SpringDoc OpenAPI 3 / Swagger UI : documentation auto de l'API REST
+    implementation 'org.springdoc:springdoc-openapi-starter-webflux-ui:2.5.0'
+
+    //  Validation : javax/jakarta annotations (@NotNull, @Valid...)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
+    // === Tests ===
     testImplementation 'org.springframework.boot:spring-boot-starter-kafka-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.cloud:spring-cloud-stream-test-binder'

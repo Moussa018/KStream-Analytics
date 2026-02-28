@@ -1,6 +1,6 @@
 # --- Étape 1 : Construction de l'application ---
 # Utilise une image Gradle avec JDK pour compiler le projet.
-FROM gradle:8.8-jdk17 AS build
+FROM gradle:8.14-jdk17 AS build
 WORKDIR /app
 
 # Copie les fichiers de build Gradle et le code source
